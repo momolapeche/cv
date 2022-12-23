@@ -3,10 +3,56 @@
         <h1>GAME OF LIFE</h1>
         <canvas id="GOLCanvas"></canvas>
     </div>
+    <GOLPatternSelect :patterns="Object.keys(patterns)" @pattern-changed="changePattern" />
 </template>
 
 <script lang="ts">
+import GOLPatternSelect from '@/components/GOLPatternSelect.vue';
 import { defineComponent } from 'vue';
+
+const patterns = {
+    bloc: {
+        pattern: {
+            width: 2,
+            height: 2,
+            pixels: [
+                1,1,
+                1,1,
+            ],
+        }
+    },
+    clignotant: {
+        pattern: {
+            width: 3,
+            height: 1,
+            pixels: [
+                1,1,1
+            ],
+        }
+    },
+    planeur: {
+        pattern: {
+            width: 3,
+            height: 3,
+            pixels: [
+                0,1,0,
+                0,0,1,
+                1,1,1,
+            ],
+        }
+    },
+    ruche: {
+        pattern: {
+            width: 4,
+            height: 3,
+            pixels: [
+                0,1,1,0,
+                1,0,0,1,
+                0,1,1,0,
+            ],
+        }
+    },
+}
 
 function createGridTexture(gl: WebGL2RenderingContext, width: number, height: number): WebGLTexture {
     const tex = gl.createTexture()
@@ -43,11 +89,11 @@ function createGridTexture(gl: WebGL2RenderingContext, width: number, height: nu
     return tex
 }
 
-function changePattern(gl: WebGL2RenderingContext, pattern: {texture: WebGLTexture, width: number, height: number}, data: Uint8Array, width: number, height: number) {
+function changePattern(gl: WebGL2RenderingContext, pattern: {texture: WebGLTexture, width: number, height: number}, patternData: { width: number, height: number, pixels: Array<number> }) {
     gl.bindTexture(gl.TEXTURE_2D, pattern.texture)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data)
-    pattern.width = width
-    pattern.height = height
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, patternData.width, patternData.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(patternData.pixels.map(x => [x*255, 0,0, 255]).flat()))
+    pattern.width = patternData.width
+    pattern.height = patternData.height
 
     gl.generateMipmap(gl.TEXTURE_2D)
 }
@@ -215,13 +261,30 @@ const sX = size
 const sY = size
 
 export default defineComponent({
+    components: { GOLPatternSelect },
+
+    data: () => {
+        return {
+            patterns: patterns,
+            currentPattern: patterns.planeur,
+        }
+    },
+
+    methods: {
+        changePattern(name: keyof typeof patterns) {
+            this.currentPattern = patterns[name]
+        }
+    },
+
     async mounted() {
         const canvas = document.querySelector("#GOLCanvas") as HTMLCanvasElement
         canvas.width = 512
         canvas.height = 512
         const gl = canvas.getContext("webgl2") as WebGL2RenderingContext
-        // gl.clearColor(0,0,0,1)
-        // gl.clear(gl.COLOR_BUFFER_BIT)
+
+        this.$watch("currentPattern", (newPattern) => {
+            changePattern(gl, pattern, newPattern.pattern)
+        })
 
         const gridTextures = [
             createGridTexture(gl, sX, sY),
@@ -256,11 +319,7 @@ export default defineComponent({
             height: 0,
             texture: gl.createTexture() as WebGLTexture,
         }
-        changePattern(gl, pattern, new Uint8Array([
-            1,1,1,
-            0,0,1,
-            0,1,0,
-        ].map(x => [x*255, 0, 0, 255]).flat()), 3, 3)
+        changePattern(gl, pattern, this.currentPattern.pattern)
 
 
         const transformMat = new Float32Array([
@@ -338,6 +397,11 @@ export default defineComponent({
                 applyPattern(gl, framebuffer, patternProgram, positionBuffer, gridTextures[flip], pattern, hoveredCell)
             }
         }
+        function ClickCallback(e: MouseEvent) {
+            console.log("CLICK")
+            applyPattern(gl, framebuffer, patternProgram, positionBuffer, gridTextures[flip], pattern, hoveredCell)
+        }
+        canvas.addEventListener("click", ClickCallback)
         document.addEventListener("keydown", KeydownCallback)
         document.addEventListener("keyup", KeyupCallback)
         const hoveredCell = new Int32Array([0,0])
