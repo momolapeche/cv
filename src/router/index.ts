@@ -1,11 +1,29 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import Home from '../views/Home.vue'
+import GameOfLife from '../views/GameOfLife.vue'
+import ThreeEngine from '../views/ThreeEngine.vue'
+import RayTracing from '../views/RayTracing.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'Home',
     component: Home
+  },
+  {
+    path: '/game-of-life',
+    name: 'GAME_OF_LIFE',
+    component: GameOfLife,
+  },
+  {
+    path: '/ray-tracing',
+    name: 'RAY_TRACING',
+    component: RayTracing,
+  },
+  {
+    path: '/engine',
+    name: 'Engine',
+    component: ThreeEngine,
   },
   {
     path: '/about',

@@ -1,6 +1,9 @@
 <template>
   <div id="nav">
     <router-link to="/">Home</router-link> |
+    <router-link to="/game-of-life">Game of Life</router-link> |  
+    <router-link to="/ray-tracing">Ray Tracing</router-link> |  
+    <router-link to="/engine">Engine</router-link> |
     <router-link to="/about">About</router-link>
   </div>
   <router-view/>
