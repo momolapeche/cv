@@ -38,7 +38,9 @@ export class GameObject {
 
   _init(): void {
     this.initialized = true;
-    Managers.get(GraphicsManager).add(this.threeObject)
+    if (this.#parent === null) {
+      Managers.get(GraphicsManager).add(this.threeObject)
+    }
     this._bindEvents(this);
   }
   _destroy(): void {
@@ -50,7 +52,9 @@ export class GameObject {
     }
     this.events = {};
 
-    Managers.get(GraphicsManager).remove(this.threeObject)
+    if (this.#parent === null) {
+      Managers.get(GraphicsManager).remove(this.threeObject)
+    }
   }
 
   _bindEvents(obj: GameObject | Component): void {
@@ -65,6 +69,12 @@ export class GameObject {
     this.components.push(component);
     this._bindEvents(component);
     return component
+  }
+
+  addChild(obj: GameObject): void {
+    obj.parent = this
+    this.children.add(obj)
+    this.threeObject.add(obj.threeObject)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,5 +114,11 @@ export class GameObject {
 
   get parent(): GameObject | null {
     return this.#parent
+  }
+  set parent(parent: GameObject | null) {
+    if (this.parent) {
+      this.parent.threeObject.remove(this.threeObject)
+    }
+    this.#parent = parent
   }
 }

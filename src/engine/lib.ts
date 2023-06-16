@@ -55,7 +55,7 @@ export class EngineClass {
 
     Managers.reset()
 
-    const managerList = [ ...DEFAULT_MANAGERS, ...(<typeof Scene><unknown>sceneCtor).Managers ]
+    const managerList = new Set([ ...DEFAULT_MANAGERS, ...(<typeof Scene><unknown>sceneCtor).Managers ])
 
     for (const manager of managerList) {
       Managers.setup(manager)

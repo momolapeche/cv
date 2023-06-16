@@ -23,6 +23,7 @@ export class GraphicsManager extends Manager {
         canvas.height = 600
         this.renderer = new THREE.WebGLRenderer({
             canvas,
+            antialias: true,
         })
 
         this.renderer.shadowMap.enabled = true
@@ -48,6 +49,7 @@ export class GraphicsManager extends Manager {
     }
 
     Render(): void {
+        this.renderer.setRenderTarget(null)
         this.renderer.render(this.scene, this.camera)
     }
 
@@ -172,4 +174,8 @@ export class AnimationMixerComponent extends Component {
     PostUpdate(): void {
         this.mixer.update(Managers.get(TimeManager).deltaTime)
     }
+}
+
+export {
+    THREE
 }

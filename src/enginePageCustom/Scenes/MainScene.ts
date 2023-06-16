@@ -15,6 +15,8 @@ import { mat4, quat, vec3 } from "gl-matrix";
 import { Camera } from "@/engine/Graphics/Camera";
 import { addEventListener } from "@/engine/Events";
 import { AnimationMixerComponent, CameraGameObject, GraphicsManager, LightGO, MeshComponent } from "@/engine/Graphics";
+import { GameOfLife } from "../GameObjects/GameOfLife";
+import { ButtonManager } from "../Managers/ButtonManagers";
 
 let Inputs: InputsManager
 
@@ -59,18 +61,24 @@ class Box extends GameObject {
     }
 }
 
-class Table extends GameObject {
+class Screen extends GameObject {
+    material: THREE.MeshBasicMaterial
+
     constructor(x: number, y: number, z: number) {
         super()
 
         this.threeObject.position.set(x, y, z)
 
-        const scene = Managers.get(GraphicsManager).gltfModels['table'].scene.clone()
-        this.addComponent(new MeshComponent(this, scene))
-        this.addComponent(new RigidBodyComponent(this,
-            RigidBodyComponent.BoxShape(1, 0.5, 1),
-            Managers.get(PhysicsManager).Rapier.RigidBodyDesc.dynamic()
-        ))
+        const geometry = new THREE.PlaneGeometry(1, 1)
+
+        this.material = new THREE.MeshBasicMaterial({
+            map: null,
+        })
+        this.addComponent(new MeshComponent(this, new THREE.Mesh(geometry, this.material)))
+    }
+
+    setTexture(texture: THREE.Texture): void {
+        this.material.map = texture
     }
 }
 
@@ -388,7 +396,7 @@ class Grass extends GameObject {
             defines: {
             },
             uniforms: {
-                diffuse: { value: new THREE.Vector3(0.2,1,0.5) },
+                diffuse: { value: new THREE.Vector3(0.1,0.9,0.4) },
                 time: { value: 0 },
                 radius: { value: radius },
             }
@@ -411,6 +419,7 @@ export default class MainScene extends Scene {
     static Managers = [
         PhysicsManager,
         MainManager,
+        ButtonManager,
     ]
 
     async Setup(): Promise<void> {
@@ -425,6 +434,7 @@ export default class MainScene extends Scene {
         await GM.loadGLTF('idle', '/models/mixamo/idle.gltf')
         await GM.loadGLTF('table', '/models/table.gltf')
         await GM.loadGLTF('terrain', '/models/room.gltf')
+        await GM.loadGLTF('gameOfLife', '/models/game_of_life_monitor.gltf')
 
         grassVSSrc = await fetch('/engine_shaders/grassVS.glsl').then(f => f.text())
         grassFSSrc = await fetch('/engine_shaders/grassFS.glsl').then(f => f.text())
@@ -476,6 +486,13 @@ export default class MainScene extends Scene {
             Instance.Instantiate(grass)
         }
 
+        const screen = new Screen(0,2,0)
+        Instance.Instantiate(screen)
+
+        const gol = new GameOfLife(screen)
+        Instance.Instantiate(gol)
+
+        screen.setTexture(gol.target.texture)
 
         for (let i = 0; i < 11 * 11; i++) {
             const x = i % 11

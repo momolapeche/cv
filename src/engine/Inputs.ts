@@ -1,13 +1,23 @@
 import { triggerEvent } from './Events';
-import { Manager } from './Manager';
+import { GraphicsManager } from './Graphics';
+import { Manager, Managers } from './Manager';
 
 export class InputsManager extends Manager {
   keyboardState = new Set();
   keyboardPressed = new Set();
-  mouse = {
-    move: [0, 0],
-    button: [false, false, false, false, false],
-  };
+
+  domElement: HTMLCanvasElement = <HTMLCanvasElement><unknown>null
+  domElementRect: DOMRect = <DOMRect><unknown>null
+
+  #clickCallback = ((event: MouseEvent) => {
+    const x = event.clientX - this.domElementRect.left
+    const y = event.clientY - this.domElementRect.top
+
+    const nx = x / this.domElementRect.width
+    const ny = y / this.domElementRect.height
+
+    triggerEvent('OnClick', { x, y, nx, ny })
+  }).bind(this)
 
   #keydownCallback = ((event: KeyboardEvent) => {
     if (!this.keyboardState.has(event.key)) {
@@ -25,16 +35,21 @@ export class InputsManager extends Manager {
     super()
     document.addEventListener('keydown', this.#keydownCallback)
     document.addEventListener('keyup', this.#keyupCallback)
+    document.addEventListener('click', this.#clickCallback)
   }
+
+  async Setup(): Promise<void> {
+    this.domElement = Managers.get(GraphicsManager).renderer.domElement
+    this.domElementRect = this.domElement.getBoundingClientRect()
+  }
+
   Destructor(): void {
     document.removeEventListener('keydown', this.#keydownCallback)
     document.removeEventListener('keyup', this.#keyupCallback)
+    document.removeEventListener('click', this.#clickCallback)
   }
 
   PostUpdate(): void {
-    this.mouse.move[0] = 0;
-    this.mouse.move[1] = 0;
-    this.mouse.button = this.mouse.button.map(() => false);
     this.keyboardPressed.clear();
   }
 
@@ -43,14 +58,5 @@ export class InputsManager extends Manager {
   }
   getPressed(k: string): boolean {
     return this.keyboardPressed.has(k);
-  }
-  getButton(n: number): boolean {
-    return this.mouse.button[n];
-  }
-  getMouseMoveX(): number {
-    return this.mouse.move[0];
-  }
-  getMouseMoveY(): number {
-    return this.mouse.move[1];
   }
 }

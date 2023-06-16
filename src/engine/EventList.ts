@@ -25,7 +25,7 @@ export interface Events {
   Render: undefined
   Exit: undefined
   OnKeyPressed: { event: KeyboardEvent }
-  OnClick: { event: MouseEvent }
+  OnClick: { x: number, y: number, nx: number, ny: number }
 
   // CUSTOM EVENTS
   Debug: { position: number[] }
